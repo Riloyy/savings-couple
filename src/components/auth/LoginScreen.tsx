@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { USERS } from '../../data/mock'
-import { Numpad } from '../ui/Numpad'
-import { Heart } from 'lucide-react'
+import { PinInput } from '../ui/PinInput'
+import { Heart, ChevronLeft } from 'lucide-react'
 
 export function LoginScreen() {
   const { login } = useAuth()
@@ -11,34 +11,25 @@ export function LoginScreen() {
   const [error, setError] = useState('')
   const [step, setStep] = useState<'select' | 'pin'>('select')
 
+  useEffect(() => {
+    if (pin.length === 6) {
+      const ok = login(userId, pin)
+      if (!ok) {
+        setError('PIN salah, coba lagi')
+        setPin('')
+      }
+    }
+  }, [pin, userId, login])
+
   function handleSelectUser(id: string) {
     setUserId(id)
     setStep('pin')
     setError('')
   }
 
-  function handleDigit(d: string) {
-    if (pin.length >= 6) return
-    const next = pin + d
-    setPin(next)
-    setError('')
-    if (next.length === 6) {
-      const ok = login(userId, next)
-      if (!ok) {
-        setError('PIN salah, coba lagi')
-        setPin('')
-      }
-    }
-  }
-
-  function handleDelete() {
-    setPin(prev => prev.slice(0, -1))
-    setError('')
-  }
-
-  function handleClear() {
-    setPin('')
-    setError('')
+  function handlePinChange(val: string) {
+    setPin(val)
+    if (error) setError('')
   }
 
   if (step === 'select') {
@@ -84,28 +75,20 @@ export function LoginScreen() {
           {USERS.find(u => u.id === userId)?.name[0]}
         </div>
         <h2 className="font-display text-xl font-bold text-text-primary">Masukkan PIN</h2>
-        {error && <p className="text-negative text-[13px] mt-2">{error}</p>}
       </div>
 
-      <div className="flex gap-3 mb-8">
-        {[0, 1, 2, 3, 4, 5].map(i => (
-          <div
-            key={i}
-            className="w-3 h-3 rounded-full transition-colors duration-150"
-            style={{
-              backgroundColor: i < pin.length ? 'var(--color-love-pink)' : 'var(--color-border)',
-            }}
-          />
-        ))}
-      </div>
-
-      <Numpad onDigit={handleDigit} onDelete={handleDelete} onClear={handleClear} />
+      <PinInput
+        value={pin}
+        onChange={handlePinChange}
+        error={error}
+      />
 
       <button
         onClick={() => { setStep('select'); setPin(''); setError('') }}
-        className="mt-6 text-text-secondary text-[13px] underline"
+        className="mt-8 flex items-center gap-1.5 h-10 px-4 rounded-full bg-bg-surface text-text-secondary text-[13px] font-medium shadow-sm active:scale-95 transition-all"
       >
-        Kembali
+        <ChevronLeft size={14} />
+        Ganti akun
       </button>
     </div>
   )
