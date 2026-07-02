@@ -11,6 +11,7 @@ import { DashboardPage } from './components/dashboard/DashboardPage'
 import { HistoryPage } from './components/transactions/HistoryPage'
 import { SettingsPage } from './components/settings/SettingsPage'
 import { TransactionForm } from './components/transactions/TransactionForm'
+import { FloatingHearts } from './components/ui/FloatingHearts'
 import type { Page } from './types'
 
 const queryClient = new QueryClient()
@@ -30,13 +31,16 @@ function AppContent() {
   }
 
   return (
-    <AppShell title={TITLES[page]}>
-      {page === 'dashboard' && <DashboardPage onAddTransaction={() => setShowForm(true)} />}
-      {page === 'history' && <HistoryPage />}
-      {page === 'settings' && <SettingsPage />}
-      <BottomNav active={page} onNavigate={setPage} />
-      {showForm && <TransactionForm onClose={() => setShowForm(false)} />}
-    </AppShell>
+    <>
+      <FloatingHearts />
+      <AppShell title={TITLES[page]}>
+        {page === 'dashboard' && <DashboardPage onAddTransaction={() => setShowForm(true)} />}
+        {page === 'history' && <HistoryPage />}
+        {page === 'settings' && <SettingsPage />}
+        <BottomNav active={page} onNavigate={setPage} />
+        {showForm && <TransactionForm onClose={() => setShowForm(false)} />}
+      </AppShell>
+    </>
   )
 }
 
