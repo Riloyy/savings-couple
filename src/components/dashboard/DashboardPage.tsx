@@ -17,6 +17,7 @@ export function DashboardPage({ onAddTransaction }: DashboardPageProps) {
   const isnaTotal = userTotals[ISNA.id] || 0
   const riloPct = total > 0 ? Math.max(0, Math.min(100, (riloTotal / total) * 100)) : 0
   const isnaPct = total > 0 ? Math.max(0, Math.min(100, (isnaTotal / total) * 100)) : 0
+  const goalPct = settings.goalAmount > 0 ? Math.min(100, (total / settings.goalAmount) * 100) : 0
   const isComplete = total >= settings.goalAmount && settings.goalAmount > 0
 
   return (
@@ -38,9 +39,24 @@ export function DashboardPage({ onAddTransaction }: DashboardPageProps) {
           nameB={ISNA.name}
           isComplete={isComplete}
         />
+        <div className="mt-2">
+          <div className="h-2.5 rounded-full bg-border overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-600 ease-out"
+              style={{
+                width: `${goalPct}%`,
+                background: 'linear-gradient(90deg, var(--color-blue-accent), var(--color-love-pink))',
+              }}
+            />
+          </div>
+          <div className="flex justify-between mt-1">
+            <span className="text-[11px] text-text-secondary">{formatIDR(total)}</span>
+            <span className="text-[11px] text-text-secondary">{formatIDR(settings.goalAmount)}</span>
+          </div>
+        </div>
       </div>
 
-      <BreakdownCard total={total} userTotals={userTotals} goalAmount={settings.goalAmount} goalName={settings.goalName} />
+      <BreakdownCard total={total} userTotals={userTotals} />
 
       <button
         onClick={onAddTransaction}
