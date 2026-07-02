@@ -63,11 +63,13 @@ src/
 - Floating hearts: 7 partikel, ukuran 14-24px, opacity 0.2-0.35, siklus 10-18 detik, linear
 - Background biru muda, hearts melayang di atas bg tapi di belakang konten
 - HeartProgress: SVG custom, 2 hati overlap, fill clip-path, pulse saat goal tercapai
+- BreakdownCard: ada section "Gabungan" (progress % terhadap goal) + per-orang (% dari total)
 
 ## Git Checkpoint
 ```
 2b0e408 — checkpoint before floating hearts animation
 0d04ffe — add subtle floating hearts animation (option 1)
+00342a5 — add combined progress (Gabungan) section to BreakdownCard
 ```
 
 ## To Revert Floating Hearts

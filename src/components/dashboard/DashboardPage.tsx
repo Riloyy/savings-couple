@@ -39,19 +39,23 @@ export function DashboardPage({ onAddTransaction }: DashboardPageProps) {
           nameB={ISNA.name}
           isComplete={isComplete}
         />
-        <div className="mt-2">
-          <div className="h-2.5 rounded-full bg-border overflow-hidden">
+        <div className="mt-3">
+          <div className="relative h-7 rounded-full bg-border overflow-hidden">
             <div
-              className="h-full rounded-full transition-all duration-600 ease-out"
+              className="h-full rounded-full transition-all duration-600 ease-out flex items-center justify-end pr-2.5"
               style={{
                 width: `${goalPct}%`,
                 background: 'linear-gradient(90deg, var(--color-blue-accent), var(--color-love-pink))',
               }}
-            />
+            >
+              {goalPct >= 8 && (
+                <span className="text-white text-[12px] font-bold drop-shadow-sm">{goalPct}%</span>
+              )}
+            </div>
           </div>
-          <div className="flex justify-between mt-1">
-            <span className="text-[11px] text-text-secondary">{formatIDR(total)}</span>
-            <span className="text-[11px] text-text-secondary">{formatIDR(settings.goalAmount)}</span>
+          <div className="flex justify-between mt-1.5">
+            <span className="text-[11px] text-text-secondary tabular-nums">{formatIDR(total)}</span>
+            <span className="text-[11px] text-text-secondary tabular-nums">{formatIDR(settings.goalAmount)}</span>
           </div>
         </div>
       </div>
