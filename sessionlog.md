@@ -83,3 +83,4 @@ git revert 0d04ffe
 3. Implementasi brute-force protection (failed_attempts, locked_until)
 4. PWA: configure vite-plugin-pwa dengan service worker
 5. Deploy ke Vercel
+6. **[PENDING — wait for instruction]** Setup GitHub repo + push (amankan .env, .gitignore sebelum push)
