@@ -23,15 +23,16 @@ export function AppLockScreen() {
       style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div className="mb-8 flex flex-col items-center">
-        <Lock size={40} className="text-blue-accent mb-3" />
-        <h2 className="font-display text-xl font-bold text-text-primary">Terkunci</h2>
-        <p className="text-text-secondary text-[13px] mt-1">Masukkan PIN untuk membuka</p>
+        <Lock size={40} className="text-white mb-3" />
+        <h2 className="font-display text-xl font-bold text-white">Terkunci</h2>
+        <p className="text-white/70 text-[13px] mt-1">Masukkan PIN untuk membuka</p>
       </div>
 
       <PinInput
         value={pin}
         onChange={setPin}
         error={error}
+        light
       />
     </div>
   )

@@ -39,14 +39,6 @@ export function BreakdownCard({ total, userTotals }: BreakdownCardProps) {
           </div>
         )
       })}
-      <div className="mt-3 pt-3 border-t border-border">
-        <div className="flex justify-between text-[15px]">
-          <span className="text-text-primary font-semibold">Goal</span>
-          <span className="text-text-secondary tabular-nums">
-            {formatIDR(total)} / {formatIDR(0)} {/* goal amount will be passed later */}
-          </span>
-        </div>
-      </div>
     </div>
   )
 }

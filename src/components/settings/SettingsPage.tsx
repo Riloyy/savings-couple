@@ -87,11 +87,9 @@ export function SettingsPage() {
         </div>
       </Card>
 
-      <div className="pt-2">
-        <Button variant="ghost" full onClick={logout}>
-          Keluar
-        </Button>
-      </div>
+      <Button variant="danger" full onClick={logout}>
+        Keluar
+      </Button>
     </div>
   )
 }

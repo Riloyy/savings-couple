@@ -5,9 +5,10 @@ interface PinInputProps {
   onChange: (val: string) => void
   error?: string
   label?: string
+  light?: boolean
 }
 
-export function PinInput({ value, onChange, error, label }: PinInputProps) {
+export function PinInput({ value, onChange, error, label, light }: PinInputProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   function focusInput() {
@@ -60,7 +61,7 @@ export function PinInput({ value, onChange, error, label }: PinInputProps) {
       )}
 
       {!value && !error && (
-        <p className="text-text-secondary text-[13px] mt-4">Ketuk untuk memasukkan PIN</p>
+        <p className={`text-[13px] mt-4 ${light ? 'text-white/70' : 'text-text-secondary'}`}>Ketuk untuk memasukkan PIN</p>
       )}
     </div>
   )

@@ -39,8 +39,8 @@ export function LoginScreen() {
       >
         <div className="mb-8 flex flex-col items-center">
           <Heart size={48} className="text-love-pink" fill="var(--color-love-pink)" />
-          <h1 className="font-display text-2xl font-bold text-text-primary mt-3">Tabungan Bersama</h1>
-          <p className="text-text-secondary text-[15px] mt-1">Siapa kamu?</p>
+          <h1 className="font-display text-2xl font-bold text-white mt-3">Tabungan Bersama</h1>
+          <p className="text-white/70 text-[15px] mt-1">Siapa kamu?</p>
         </div>
         <div className="flex flex-col gap-4 w-full max-w-xs">
           {USERS.map(u => (
@@ -74,21 +74,22 @@ export function LoginScreen() {
         >
           {USERS.find(u => u.id === userId)?.name[0]}
         </div>
-        <h2 className="font-display text-xl font-bold text-text-primary">Masukkan PIN</h2>
+        <h2 className="font-display text-xl font-bold text-white">Masukkan PIN</h2>
       </div>
 
       <PinInput
         value={pin}
         onChange={handlePinChange}
         error={error}
+        light
       />
 
       <button
         onClick={() => { setStep('select'); setPin(''); setError('') }}
-        className="mt-8 flex items-center gap-1.5 h-10 px-4 rounded-full bg-bg-surface text-text-secondary text-[13px] font-medium shadow-sm active:scale-95 transition-all"
+        className="mt-8 flex items-center gap-1.5 h-10 px-5 rounded-full bg-white/90 text-blue-accent text-[13px] font-medium shadow-sm active:scale-95 transition-all"
       >
         <ChevronLeft size={14} />
-        Ganti akun
+        Kembali
       </button>
     </div>
   )
