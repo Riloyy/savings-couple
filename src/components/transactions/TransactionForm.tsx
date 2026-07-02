@@ -87,7 +87,7 @@ export function TransactionForm({ onClose }: TransactionFormProps) {
               value={amount}
               onChange={handleAmountInput}
               placeholder="0"
-              className="w-full h-12 pl-10 pr-4 rounded-xl border border-border bg-bg-primary text-text-primary text-lg font-semibold tabular-nums focus:outline-none focus:border-blue-accent focus:ring-2 focus:ring-blue-accent/20"
+              className="w-full h-12 pl-10 pr-4 rounded-xl border border-border bg-white text-text-primary text-lg font-semibold tabular-nums focus:outline-none focus:border-blue-accent focus:ring-2 focus:ring-blue-accent/20"
               autoFocus
             />
           </div>
@@ -100,7 +100,7 @@ export function TransactionForm({ onClose }: TransactionFormProps) {
             value={note}
             onChange={e => setNote(e.target.value)}
             placeholder="Misal: Gaji bulan ini"
-            className="w-full h-12 px-4 rounded-xl border border-border bg-bg-primary text-text-primary text-[15px] focus:outline-none focus:border-blue-accent focus:ring-2 focus:ring-blue-accent/20"
+            className="w-full h-12 px-4 rounded-xl border border-border bg-white text-text-primary text-[15px] focus:outline-none focus:border-blue-accent focus:ring-2 focus:ring-blue-accent/20"
           />
         </div>
 

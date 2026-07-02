@@ -38,5 +38,9 @@ export function useTransactions() {
     }).reverse()
   }, [transactions])
 
-  return { transactions, addTransaction, total, userTotals, runningTotal }
+  const resetTransactions = useCallback(() => {
+    setTransactions([])
+  }, [])
+
+  return { transactions, addTransaction, total, userTotals, runningTotal, resetTransactions }
 }

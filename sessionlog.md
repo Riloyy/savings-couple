@@ -23,7 +23,7 @@ src/
   data/mock.ts              — RILO, ISNA users, mock transaksi (12 item), formatIDR()
   hooks/
     useAuth.tsx             — AuthProvider + useAuth (login/logout/lock/unlock)
-    useTransactions.ts      — CRUD transaksi, total, userTotals, runningTotal
+      useTransactions.ts    — CRUD transaksi, total, userTotals, runningTotal, resetTransactions
     useSettings.ts          — goalAmount, goalName
   components/
     ui/
@@ -47,7 +47,7 @@ src/
       TransactionRow.tsx    — row: ikon ↑↓, nominal warna, tanggal, user, running total
       HistoryPage.tsx       — full list + filter by user (title text-white)
     settings/
-      SettingsPage.tsx      — edit goal (input bg putih), lihat akun & device, btn Keluar merah
+      SettingsPage.tsx      — edit goal (input bg putih), Reset Goal (konfirmasi), lihat akun & device, btn Keluar merah
   App.tsx                   — routing state-based, QueryClient + AuthProvider
   main.tsx                  — entry point
   index.css                 — @import tailwindcss, @theme tokens, global styles
@@ -111,6 +111,15 @@ Semua teks yg langsung di atas `#87CEFA` diubah jadi putih:
 - Dulu: ghost button tanpa wadah
 - Sekarang: danger variant (merah), standalone
 
+### Reset Goal (Settings)
+- Tombol merah "Reset Goal" di card Goal Tabungan
+- Klik → modal konfirmasi
+- Hapus semua transaksi (resetTransactions) + reset goal ke default
+- Tombol "Simpan Goal" tetap berfungsi normal (lanjutkan goal)
+
+### TransactionForm Inputs
+- Nominal & catatan: `bg-bg-primary` → `bg-white` (ngikut background biru sebelumnya)
+
 ## Git Log
 ```
 2b0e408 — checkpoint before floating hearts animation
@@ -122,6 +131,8 @@ af5caba — add sessionlog.md
 ea5c2b8 — add pending note: GitHub setup (wait for instruction)
 0d85c8a — replace custom Numpad with native keypad (PinInput), prettier Kembali button
 982bd1a — remove Goal line in BreakdownCard, standalone Keluar button
+5e0d64f — update sessionlog with final session changes
+(HEAD)  — add Reset Goal button + TransactionForm inputs bg-white
 ```
 
 ## To Revert Specific Changes

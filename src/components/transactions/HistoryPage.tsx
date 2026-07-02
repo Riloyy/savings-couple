@@ -22,7 +22,7 @@ export function HistoryPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-xl font-bold text-text-primary">Riwayat Transaksi</h2>
+        <h2 className="font-display text-xl font-bold text-white">Riwayat Transaksi</h2>
         <button
           onClick={() => setShowFilter(!showFilter)}
           className="flex items-center gap-1.5 text-[13px] text-text-secondary h-9 px-3 rounded-full bg-bg-surface shadow-sm"

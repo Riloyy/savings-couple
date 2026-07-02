@@ -16,7 +16,7 @@ export function AppShell({ children, title }: AppShellProps) {
           className="flex items-center justify-center h-12 px-4"
           style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
         >
-          <h1 className="font-display text-xl font-semibold text-text-primary">{title}</h1>
+          <h1 className="font-display text-xl font-semibold text-white">{title}</h1>
         </header>
       )}
       <main

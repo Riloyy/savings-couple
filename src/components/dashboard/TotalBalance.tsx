@@ -20,9 +20,9 @@ export function TotalBalance({ total }: TotalBalanceProps) {
 
   return (
     <div className="text-center py-4">
-      <p className="text-text-secondary text-[13px] mb-1">Total Tabungan</p>
+      <p className="text-white/70 text-[13px] mb-1">Total Tabungan</p>
       <p
-        className={`font-display text-[40px] font-bold text-text-primary leading-tight tabular-nums transition-transform duration-300 ${pulse ? 'scale-[1.015]' : 'scale-100'}`}
+        className={`font-display text-[40px] font-bold text-white leading-tight tabular-nums transition-transform duration-300 ${pulse ? 'scale-[1.015]' : 'scale-100'}`}
       >
         {formatIDR(total)}
       </p>

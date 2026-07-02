@@ -36,7 +36,6 @@ export function BottomNav({ active, onNavigate }: BottomNavProps) {
             <Icon
               size={22}
               className={isActive ? 'text-love-pink' : 'text-text-secondary'}
-              fill={isActive ? 'var(--color-love-pink)' : 'none'}
             />
             <span
               className={`text-[11px] font-medium ${isActive ? 'text-love-pink' : 'text-text-secondary'}`}

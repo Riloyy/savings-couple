@@ -1,16 +1,19 @@
 import { useState } from 'react'
 import { useSettings } from '../../hooks/useSettings'
+import { useTransactions } from '../../hooks/useTransactions'
 import { useAuth } from '../../hooks/useAuth'
-import { RILO, ISNA, formatIDR } from '../../data/mock'
+import { RILO, ISNA, formatIDR, DEFAULT_SETTINGS } from '../../data/mock'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 
 export function SettingsPage() {
   const { settings, updateGoal } = useSettings()
+  const { resetTransactions } = useTransactions()
   const { logout } = useAuth()
   const [goalName, setGoalName] = useState(settings.goalName)
   const [goalAmount, setGoalAmount] = useState(settings.goalAmount.toLocaleString('id-ID'))
   const [saved, setSaved] = useState(false)
+  const [showReset, setShowReset] = useState(false)
 
   function handleAmountInput(e: React.ChangeEvent<HTMLInputElement>) {
     const raw = e.target.value.replace(/\D/g, '')
@@ -29,7 +32,7 @@ export function SettingsPage() {
 
   return (
     <div className="space-y-5">
-      <h2 className="font-display text-xl font-bold text-text-primary">Pengaturan</h2>
+      <h2 className="font-display text-xl font-bold text-white">Pengaturan</h2>
 
       <Card>
         <h3 className="font-display text-base font-semibold text-text-primary mb-4">Goal Tabungan</h3>
@@ -39,7 +42,7 @@ export function SettingsPage() {
             type="text"
             value={goalName}
             onChange={e => setGoalName(e.target.value)}
-            className="w-full h-11 px-4 rounded-xl border border-border bg-bg-primary text-text-primary text-[15px] focus:outline-none focus:border-blue-accent"
+            className="w-full h-11 px-4 rounded-xl border border-border bg-white text-text-primary text-[15px] focus:outline-none focus:border-blue-accent"
           />
         </div>
         <div className="mb-4">
@@ -51,14 +54,52 @@ export function SettingsPage() {
               inputMode="numeric"
               value={goalAmount}
               onChange={handleAmountInput}
-              className="w-full h-11 pl-10 pr-4 rounded-xl border border-border bg-bg-primary text-text-primary text-[15px] font-semibold tabular-nums focus:outline-none focus:border-blue-accent"
+              className="w-full h-11 pl-10 pr-4 rounded-xl border border-border bg-white text-text-primary text-[15px] font-semibold tabular-nums focus:outline-none focus:border-blue-accent"
             />
           </div>
         </div>
         <Button full onClick={handleSave} disabled={saved}>
           {saved ? 'Tersimpan ✓' : 'Simpan Goal'}
         </Button>
+        <Button full variant="danger" onClick={() => setShowReset(true)} className="mt-3">
+          Reset Goal
+        </Button>
       </Card>
+
+      {showReset && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowReset(false) }}
+        >
+          <div className="bg-bg-surface rounded-2xl p-6 max-w-sm w-full shadow-xl">
+            <h3 className="font-display text-lg font-bold text-text-primary mb-2">Reset Goal?</h3>
+            <p className="text-[13px] text-text-secondary mb-6">
+              Semua transaksi akan dihapus dan progres kembali ke nol. Tidak bisa dibatalkan.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowReset(false)}
+                className="flex-1 h-11 rounded-full bg-border/50 text-text-primary text-[15px] font-semibold active:scale-95 transition-all"
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => {
+                  resetTransactions()
+                  updateGoal(DEFAULT_SETTINGS.goalAmount, DEFAULT_SETTINGS.goalName)
+                  setGoalName(DEFAULT_SETTINGS.goalName)
+                  setGoalAmount(DEFAULT_SETTINGS.goalAmount.toLocaleString('id-ID'))
+                  setShowReset(false)
+                }}
+                className="flex-1 h-11 rounded-full bg-negative text-white text-[15px] font-semibold active:scale-95 transition-all"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Card>
         <h3 className="font-display text-base font-semibold text-text-primary mb-3">Akun Terdaftar</h3>
