@@ -10,16 +10,20 @@ export function LoginScreen() {
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
   const [step, setStep] = useState<'select' | 'pin'>('select')
+  const [loggingIn, setLoggingIn] = useState(false)
 
   useEffect(() => {
-    if (pin.length === 6) {
-      const ok = login(userId, pin)
-      if (!ok) {
-        setError('PIN salah, coba lagi')
-        setPin('')
-      }
+    if (pin.length === 6 && !loggingIn) {
+      setLoggingIn(true)
+      login(userId, pin).then(ok => {
+        if (!ok) {
+          setError('PIN salah, coba lagi')
+          setPin('')
+        }
+        setLoggingIn(false)
+      })
     }
-  }, [pin, userId, login])
+  }, [pin, userId, login, loggingIn])
 
   function handleSelectUser(id: string) {
     setUserId(id)

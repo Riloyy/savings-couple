@@ -1,7 +1,7 @@
 # Session Log
 
 ## Stack
-Vite 8 + React 19 + TypeScript 6 + Tailwind CSS v4 + @tanstack/react-query
+Vite 8 + React 19 + TypeScript 6 + Tailwind CSS v4 + @tanstack/react-query + Supabase
 
 ## Design System
 - **Bg**: `#87CEFA` (biru langit lembut)
@@ -48,17 +48,32 @@ src/
       HistoryPage.tsx       — full list + filter by user (title text-white)
     settings/
       SettingsPage.tsx      — edit goal (input bg putih), Reset Goal (konfirmasi), lihat akun & device, btn Keluar merah
-  App.tsx                   — routing state-based, QueryClient + AuthProvider
-  main.tsx                  — entry point
-  index.css                 — @import tailwindcss, @theme tokens, global styles
+  lib/
+    supabase.ts           — Supabase client (VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY)
+  App.tsx                 — routing state-based, QueryClient + AuthProvider
+  main.tsx                — entry point
+  index.css               — @import tailwindcss, @theme tokens, global styles
+supabase/
+  migration.sql           — SQL migration: 4 tabel + RLS + indexes
 ```
 
 ## Auth Flow
-- Mock PIN: `123456` untuk Rilo & Isna
-- Login: pilih user → **native keypad HP muncul otomatis/ketuk area dot** → PIN 6 digit auto-submit
+- **Supabase Auth** (production, bukan mock)
+- Login: pilih user → PIN 6 digit → sign in ke Supabase via email mapping:
+  - `rilo` → `rilo@tabungan.app`
+  - `isna` → `isna@tabungan.app`
+- PIN adalah password Supabase Auth (default: `123456`)
+- Session persist: buka ulang app → auto login (ceking `getSession()`)
+- Loading spinner saat initial session check
 - AppLock: setelah login, bisa di-trigger via `lock()`
-- Brute-force & device lock: belum diimplementasi (mock dulu)
-- Custom numpad sudah dihapus, ganti PinInput dengan hidden input + native keypad
+- Brute-force & device lock: belum diimplementasi
+
+## Database (Supabase)
+- **4 tabel**: users, user_devices, transactions, settings
+- **RLS aktif**: users & devices → hanya data sendiri, transactions → read all / insert own, settings → read & update by authenticated
+- **2 user Auth**: dibuat manual via Supabase Dashboard
+- **public.users**: diisi manual via SQL dengan UUID dari Auth users
+- `.env` menyimpan URL + anon key (terlindung .gitignore)
 
 ## Changes Made (Session 2)
 
@@ -132,7 +147,8 @@ ea5c2b8 — add pending note: GitHub setup (wait for instruction)
 0d85c8a — replace custom Numpad with native keypad (PinInput), prettier Kembali button
 982bd1a — remove Goal line in BreakdownCard, standalone Keluar button
 5e0d64f — update sessionlog with final session changes
-(HEAD)  — add Reset Goal button + TransactionForm inputs bg-white
+4768319 — add Reset Goal button with confirmation, TransactionForm inputs bg-white
+(HEAD) — migrate auth to Supabase (real login, session, user profile)
 ```
 
 ## To Revert Specific Changes
@@ -146,9 +162,11 @@ git revert 982bd1a
 ```
 
 ## Next Steps (when ready)
-1. Setup Supabase project → ganti mock data dengan real DB
-2. Implementasi device lock (Edge Function verify-device)
-3. Implementasi brute-force protection (failed_attempts, locked_until)
-4. PWA: configure vite-plugin-pwa dengan service worker
-5. Deploy ke Vercel
-6. **[PENDING — wait for instruction]** Setup GitHub repo + push (amankan .env, .gitignore sebelum push)
+1. Migrasi transactions ke Supabase (read + write + realtime)
+2. Migrasi settings ke Supabase
+3. Implementasi device lock (Edge Function verify-device)
+4. Implementasi brute-force protection (failed_attempts, locked_until)
+5. Ganti PIN (di settings)
+6. PWA: configure vite-plugin-pwa dengan service worker
+7. Deploy ke Vercel
+8. **[PENDING — wait for instruction]** Setup GitHub repo + push

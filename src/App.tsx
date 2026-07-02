@@ -17,10 +17,15 @@ import type { Page } from './types'
 const queryClient = new QueryClient()
 
 function AppContent() {
-  const { user, isLocked } = useAuth()
+  const { user, isLocked, loading } = useAuth()
   const [page, setPage] = useState<Page>('dashboard')
   const [showForm, setShowForm] = useState(false)
 
+  if (loading) return (
+    <div className="min-h-dvh bg-bg-primary flex items-center justify-center">
+      <div className="w-8 h-8 border-3 border-blue-accent border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
   if (!user) return <LoginScreen />
   if (isLocked) return <AppLockScreen />
 

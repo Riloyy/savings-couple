@@ -1,8 +1,13 @@
 import type { User, Transaction, Settings } from '../types'
 
-export const RILO: User = { id: 'rilo', name: 'Rilo', avatarColor: '#5B8DEF' }
-export const ISNA: User = { id: 'isna', name: 'Isna', avatarColor: '#FF6B81' }
+export const RILO: User = { id: 'rilo', shortId: 'rilo', name: 'Rilo', avatarColor: '#5B8DEF' }
+export const ISNA: User = { id: 'isna', shortId: 'isna', name: 'Isna', avatarColor: '#FF6B81' }
 export const USERS: User[] = [RILO, ISNA]
+
+export const USER_EMAILS: Record<string, string> = {
+  rilo: 'rilo@tabungan.app',
+  isna: 'isna@tabungan.app',
+}
 
 export const DEFAULT_SETTINGS: Settings = {
   goalAmount: 50000000,
