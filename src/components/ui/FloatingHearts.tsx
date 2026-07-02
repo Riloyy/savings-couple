@@ -14,10 +14,10 @@ export function FloatingHearts() {
     Array.from({ length: 7 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
-      size: 10 + Math.random() * 10,
-      delay: Math.random() * 12,
-      duration: 12 + Math.random() * 6,
-      opacity: 0.12 + Math.random() * 0.1,
+      size: 14 + Math.random() * 10,
+      delay: Math.random() * 10,
+      duration: 10 + Math.random() * 8,
+      opacity: 0.2 + Math.random() * 0.15,
     }))
   )
 
@@ -31,7 +31,7 @@ export function FloatingHearts() {
           className="absolute bottom-0"
           style={{
             left: `${h.x}%`,
-            animation: `heart-float-${h.id} ${h.duration}s ${h.delay}s infinite ease-in`,
+            animation: `heart-float-${h.id} ${h.duration}s ${h.delay}s infinite linear`,
             opacity: 0,
           }}
         >
@@ -40,7 +40,6 @@ export function FloatingHearts() {
             height={h.size}
             viewBox="0 0 24 24"
             fill="var(--color-love-pink)"
-            style={{ opacity: h.opacity }}
           >
             <path d="M12 21.35C12 21.35 4 16 4 9.5 4 6.46 6.46 4 9.5 4c1.74 0 3.41.81 4.5 2.09C15.09 4.81 16.76 4 18.5 4 21.54 4 24 6.46 24 9.5c0 6.5-8 11.85-8 11.85L12 21.35z" />
           </svg>

@@ -8,7 +8,7 @@ interface AppShellProps {
 export function AppShell({ children, title }: AppShellProps) {
   return (
     <div
-      className="min-h-dvh bg-bg-primary"
+      className="min-h-dvh"
       style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
     >
       {title && (

@@ -31,7 +31,7 @@ function AppContent() {
   }
 
   return (
-    <>
+    <div className="bg-bg-primary min-h-dvh relative">
       <FloatingHearts />
       <AppShell title={TITLES[page]}>
         {page === 'dashboard' && <DashboardPage onAddTransaction={() => setShowForm(true)} />}
@@ -40,7 +40,7 @@ function AppContent() {
         <BottomNav active={page} onNavigate={setPage} />
         {showForm && <TransactionForm onClose={() => setShowForm(false)} />}
       </AppShell>
-    </>
+    </div>
   )
 }
 
