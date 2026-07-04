@@ -148,7 +148,7 @@ ea5c2b8 — add pending note: GitHub setup (wait for instruction)
 982bd1a — remove Goal line in BreakdownCard, standalone Keluar button
 5e0d64f — update sessionlog with final session changes
 4768319 — add Reset Goal button with confirmation, TransactionForm inputs bg-white
-(HEAD) — migrate auth to Supabase (real login, session, user profile)
+fd4623e — migrate auth to Supabase (real login, session, user profile)
 ```
 
 ## To Revert Specific Changes
@@ -161,12 +161,198 @@ git revert 0d85c8a
 git revert 982bd1a
 ```
 
-## Next Steps (when ready)
-1. Migrasi transactions ke Supabase (read + write + realtime)
-2. Migrasi settings ke Supabase
-3. Implementasi device lock (Edge Function verify-device)
-4. Implementasi brute-force protection (failed_attempts, locked_until)
-5. Ganti PIN (di settings)
-6. PWA: configure vite-plugin-pwa dengan service worker
-7. Deploy ke Vercel
-8. **[PENDING — wait for instruction]** Setup GitHub repo + push
+## Changes Made (Session 3) — Migrasi Transactions & Settings ke Supabase
+
+### Migration SQL
+- `supabase/migration_v2_rls.sql` — update RLS: `users` SELECT ALL, `transactions` DELETE OWN
+
+### Hooks
+- **useTransactions.ts**: rewrite total dari mock → Supabase:
+  - `useQuery` fetch transactions (order by created_at DESC)
+  - `useMutation` untuk insert + delete (Reset Goal)
+  - Realtime subscription via `postgres_changes` channel
+  - `addTransaction` jadi async (`mutateAsync`)
+  - `isAdding` state exported
+  - Computed tetap pakai `useMemo`: total, userTotals, runningTotal
+- **useSettings.ts**: rewrite ke Supabase:
+  - `useQuery` fetch settings (id=1, single row)
+  - `useMutation` untuk update goal
+  - `initialData` fallback: Rp50jt, "DP Rumah"
+- **useAuth.tsx**: tambah `users` + `usersById` untuk UUID→name/color mapping:
+  - `fetchAllUsers()` dipanggil setelah login / session restore
+  - Semua component pake `usersById[uuid]` instead of `RILO`/`ISNA` constants
+
+### Components updated
+- **DashboardPage**: ambil userA/userB dari `useAuth().users` (index 0 & 1)
+- **BreakdownCard**: terima `users: User[]` prop (ganti `import USERS`)
+- **TransactionRow**: terima `usersById: Record<string, User>` prop
+- **HistoryPage**: filter pakai `useAuth().users` + `usersById`
+- **SettingsPage**: daftar akun pakai `useAuth().users`
+
+### Cleanup
+- `mock.ts`: hapus `generateMockTransactions()`, hapus unused `Transaction` import
+
+### Removed
+- Card "Device Terdaftar" dari SettingsPage
+- Device lock (Edge Function) — batal, tidak jadi diimplementasi
+
+## Changes Made (Session 4) — Brute-force Protection
+
+### Migration SQL
+- `supabase/migration_v3_bruteforce.sql` — 2 RPC functions:
+  - `increment_failed_attempts(UUID)` → increment + auto-lock at 5 attempts (15 menit)
+  - `reset_failed_attempts(UUID)` → reset counter on successful login
+  - Keduanya `SECURITY DEFINER` (bypass RLS, bisa dipanggil sebelum login)
+
+### useAuth.tsx
+- `login()` return type jadi `LoginResult` (object, bukan boolean):
+  - `{ ok: true }` → login berhasil
+  - `{ ok: false, reason: 'locked', remainingMinutes }` → akun terkunci
+  - `{ ok: false, reason: 'wrong_pin', remainingAttempts }` → PIN salah, sisa N
+  - `{ ok: false, reason: 'not_found' }` → user tak dikenal
+  - `{ ok: false, reason: 'auth_error' }` → error Supabase Auth
+- Flow login baru:
+  1. Cari user by name → dapat UUID
+  2. Cek `locked_until` — kalau masih locked, tolak
+  3. Attempt `signInWithPassword`
+  4. Gagal → panggil `increment_failed_attempts` RPC
+  5. Berhasil → panggil `reset_failed_attempts` RPC
+- Export tipe `LoginResult` dan `LockInfo`
+- Export fungsi `checkLock(shortId)` untuk pengecekan awal
+
+### LoginScreen.tsx
+- Saat pilih user → panggil `checkLock()` → langsung deteksi jika terkunci
+- Locked state: tampilkan icon Lock + pesan "Coba lagi dalam X menit", PIN input disabled
+- Wrong PIN: tampilkan "PIN salah. N kesempatan lagi."
+- Sisa kesempatan ditampilkan di bawah judul "Masukkan PIN"
+
+### Thresholds
+- Maksimal 5 percobaan gagal
+- Lock duration: 15 menit
+- Reset otomatis saat lock expired + percobaan baru
+
+## Changes Made (Session 5) — Ganti PIN + PWA + Deploy Config
+
+### Ganti PIN (SettingsPage)
+- `useAuth.tsx`: tambah `changePassword(currentPassword, newPassword)` 
+  - Re-authenticate via `signInWithPassword` → `updateUser`
+  - Return `{ ok, error }` object
+- `SettingsPage.tsx`: Card "Ganti PIN" baru (sebelum Akun Terdaftar)
+  - 3 input: PIN Lama, PIN Baru, Konfirmasi PIN Baru (numeric 6 digit)
+  - Validasi: konfirmasi harus cocok, min 6 digit
+  - Loading spinner, success message hijau (auto-hide 2s), error merah
+
+### PWA
+- `vite.config.ts`: tambah `VitePWA` plugin
+  - registerType: autoUpdate
+  - Manifest lengkap (name, short_name, icons, theme/bg color, standalone, portrait)
+  - Workbox: precache JS/CSS/HTML/SVG, NetworkFirst untuk Supabase API
+- `public/icon.svg`: heart icon (#FF6B81) untuk PWA
+- `index.html`: apple-touch-icon, apple-mobile-web-app meta, mobile-web-app-capable
+- Build: service worker generated ✅ (8 entries, 483 KiB precache)
+
+### Deploy Config
+- `vercel.json`: Vite framework preset + SPA rewrites
+- `.env.example`: placeholder env vars
+- `DEPLOY.md`: panduan deploy via Vercel Dashboard atau CLI
+
+## Changes Made (Session 6) — Deploy ke Vercel
+
+### Deploy
+- Vercel project: `riloz/savings-couple`
+- Domain: **https://savings-couple.vercel.app** (aliased)
+- Build: sukses (PWA service worker + precache)
+- Environment variables:
+  - `VITE_SUPABASE_URL`: `https://jmcwusatmergvhxnigcw.supabase.co`
+  - `VITE_SUPABASE_ANON_KEY`: (publishable key)
+- Redeploy setelah set env vars ✅
+
+### Service Worker terdaftar
+- 8 entries precache (483 KiB)
+- NetworkFirst strategy untuk Supabase API calls
+- Auto-update (registerType: autoUpdate)
+
+## Changes Made (Session 7+) — Diskusi & Perubahan Akhir
+
+### Login — PIN sebagai identitas
+- Tidak ada user selection. Langsung input PIN.
+- `login(pin)` → coba ke 2 email (Rilo & Isna), yang cocok auto-login
+- Gagal → increment `failed_attempts` kedua user, lock jika >= 5
+
+### Short ID berubah
+- Rilo: `rilo` → `3105`
+- Isna: `isna` → `1012`
+- `mock.ts`: `RILO.id`, `ISNA.id`, `USER_EMAILS` keys diupdate
+- `useAuth.tsx`: `shortIdToName`, `fetchUserProfile`, `fetchAllUsers` pakai `NAME_TO_SHORT_ID`
+- Card "Ganti PIN" dihapus (user atur via Supabase langsung)
+- ID UUID di "Akun Terdaftar" dihapus (line "ID: ..." tidak ditampilkan)
+
+### Greeting Card (Dashboard)
+- Card putih + avatar lingkaran + "Selamat Pagi/Siang/Sore/Malam" (WIB)
+- Font lebih besar: greeting `text-lg` Baloo 2, nama `text-[17px]`
+
+### Realtime fix
+- Channel name pakai `crypto.randomUUID()` biar gak clash pas StrictMode re-mount
+
+### BreakdownCard → Progres ke Goal
+- Sekarang nunjukkin `userAmount / goalAmount * 100` (bukan bagi rata)
+- Bar gradient biru-pink, label "% dari goal"
+- Judul card: "Progres ke Goal"
+
+### PWA Icon
+- Hapus generate-icons script & generated PNG
+- User sediakan `public/icon.png` sendiri
+- Manifest pake PNG + SVG, `purpose: 'any'` (bukan maskable — biar gak kotak hitam)
+- `index.html`: apple-touch-icon pake PNG
+
+### Auto-lock (privasi)
+- `useAuth.tsx`: tambah `visibilitychange` listener → app ke background → auto-lock
+- `unlock(pin)` jadi async: re-authenticate via `signInWithPassword` sebelum unlock
+- `AppLockScreen`: panggil `await unlock(pin)`, handle error
+
+## Changes Made — Fix Reset Goal (global)
+- Migration v4: `reset_all_transactions()` RPC (SECURITY DEFINER, bypass RLS)
+- Fix: tambah `WHERE TRUE` karena PostgreSQL safe update mode
+- Frontend: panggil `supabase.rpc('reset_all_transactions')` bukan `.delete().neq(...)`
+- Persentase goal bar: format 1 desimal (`52,3%`) pakai `toFixed(1)` + koma ala Indonesia
+
+## Changes Made (Session 8) — Lock-on-kill via localStorage + Deploy
+
+### useAuth.tsx
+- **visibilitychange**: tambah `localStorage.setItem('app_locked', 'true')` saat app ke background
+- **pagehide**: tambah listener untuk menangkap app di-kill/ditutup (lebih reliable daripada visibilitychange)
+- **getSession startup**: sebelum auto-login, cek `localStorage.getItem('app_locked')` — kalau `'true'`, set `isLocked = true` dulu biar lock screen muncul
+- **login success**: `localStorage.removeItem('app_locked')`
+- **unlock success**: `localStorage.removeItem('app_locked')`
+- **logout**: `localStorage.removeItem('app_locked')`
+- ~percobaan: idle timeout 1 menit (direvert)~
+
+### Behavior
+- App di-swipe (killed) → `pagehide` fires → simpan ke localStorage → saat dibuka lagi, lock screen muncul ✅ (verified)
+- App background (pindah app lain) → `visibilitychange` fires → simpan ke localStorage → balik lagi → lock screen
+- Refresh halaman (jarang di PWA) → `pagehide` fires → lock screen juga (masuk PIN lagi)
+- Lock screen dismiss normal (PIN) seperti biasa
+
+### Deploy
+- Deploy ulang ke Vercel (https://savings-couple.vercel.app) ✅
+
+## Changes Made (Session 9) — Default goal kosong
+
+- `mock.ts` `DEFAULT_SETTINGS`: `goalAmount: 0`, `goalName: ''`
+- `useSettings.ts` `initialData`: `{ goalAmount: 0, goalName: '' }`
+- `DashboardPage`: "Goal: ..." hanya muncul kalau `goalName` diisi
+- Deploy ke Vercel ✅
+
+## Final Status
+| Fitur | Status |
+|---|---|
+| Auth (Supabase, PIN=identitas) | ✅ |
+| Transactions (Supabase + realtime) | ✅ |
+| Settings (Supabase) | ✅ |
+| Floating Hearts | ✅ |
+| Heart Progress SVG | ✅ |
+| Brute-force protection | ✅ |
+| Auto-lock on background | ✅ |
+| PWA (manifest + icons + service worker) | ✅ |
+| Deploy ke Vercel | ✅ |
+| **GitHub + push** | **⏳ pending instruksi** |

@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react'
 import { useTransactions } from '../../hooks/useTransactions'
-import { USERS } from '../../data/mock'
+import { useAuth } from '../../hooks/useAuth'
 import { TransactionRow } from './TransactionRow'
 import { Filter } from 'lucide-react'
 
 export function HistoryPage() {
   const { transactions } = useTransactions()
+  const { users, usersById } = useAuth()
   const [filterUser, setFilterUser] = useState<string>('all')
   const [showFilter, setShowFilter] = useState(false)
 
@@ -19,6 +20,8 @@ export function HistoryPage() {
     return sorted
   }, [transactions, filterUser])
 
+  const filterLabel = filterUser === 'all' ? 'Semua' : (usersById[filterUser]?.name || 'Unknown')
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -28,7 +31,7 @@ export function HistoryPage() {
           className="flex items-center gap-1.5 text-[13px] text-text-secondary h-9 px-3 rounded-full bg-bg-surface shadow-sm"
         >
           <Filter size={14} />
-          {filterUser === 'all' ? 'Semua' : USERS.find(u => u.id === filterUser)?.name}
+          {filterLabel}
         </button>
       </div>
 
@@ -44,7 +47,7 @@ export function HistoryPage() {
           >
             Semua
           </button>
-          {USERS.map(u => (
+          {users.map(u => (
             <button
               key={u.id}
               onClick={() => { setFilterUser(u.id); setShowFilter(false) }}
@@ -67,7 +70,7 @@ export function HistoryPage() {
             <p className="text-text-secondary text-[13px] mt-1">Mulai catat tabungan pertama, yuk!</p>
           </div>
         ) : (
-          filtered.map(t => <TransactionRow key={t.id} transaction={t} />)
+          filtered.map(t => <TransactionRow key={t.id} transaction={t} usersById={usersById} />)
         )}
       </div>
     </div>

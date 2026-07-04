@@ -1,17 +1,19 @@
-import { USERS, formatIDR } from '../../data/mock'
+import type { User } from '../../types'
+import { formatIDR } from '../../data/mock'
 
 interface BreakdownCardProps {
-  total: number
+  goalAmount: number
   userTotals: Record<string, number>
+  users: User[]
 }
 
-export function BreakdownCard({ total, userTotals }: BreakdownCardProps) {
+export function BreakdownCard({ goalAmount, userTotals, users }: BreakdownCardProps) {
   return (
     <div className="bg-bg-surface rounded-2xl p-4 shadow-[0_4px_20px_rgba(31,51,80,0.06)]">
-      <h3 className="font-display text-base font-semibold text-text-primary mb-3">Kontribusi</h3>
-      {USERS.map(u => {
+      <h3 className="font-display text-base font-semibold text-text-primary mb-3">Progres ke Goal</h3>
+      {users.map(u => {
         const userTotal = userTotals[u.id] || 0
-        const pctOfTotal = total > 0 ? Math.round((userTotal / total) * 100) : 0
+        const pct = goalAmount > 0 ? Math.min(100, Math.round((userTotal / goalAmount) * 100)) : 0
         return (
           <div key={u.id} className="flex items-center gap-3 mb-3 last:mb-0">
             <div
@@ -29,12 +31,12 @@ export function BreakdownCard({ total, userTotals }: BreakdownCardProps) {
                 <div
                   className="h-full rounded-full transition-all duration-600 ease-out"
                   style={{
-                    width: `${pctOfTotal}%`,
-                    backgroundColor: u.avatarColor,
+                    width: `${pct}%`,
+                    background: 'linear-gradient(90deg, var(--color-blue-accent), var(--color-love-pink))',
                   }}
                 />
               </div>
-              <span className="text-[11px] text-text-secondary">{pctOfTotal}% dari total</span>
+              <span className="text-[11px] text-text-secondary">{pct}% dari goal</span>
             </div>
           </div>
         )

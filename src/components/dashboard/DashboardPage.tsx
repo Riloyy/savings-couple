@@ -3,7 +3,8 @@ import { TotalBalance } from './TotalBalance'
 import { BreakdownCard } from './BreakdownCard'
 import { useTransactions } from '../../hooks/useTransactions'
 import { useSettings } from '../../hooks/useSettings'
-import { RILO, ISNA, formatIDR } from '../../data/mock'
+import { useAuth } from '../../hooks/useAuth'
+import { formatIDR } from '../../data/mock'
 
 interface DashboardPageProps {
   onAddTransaction: () => void
@@ -12,31 +13,53 @@ interface DashboardPageProps {
 export function DashboardPage({ onAddTransaction }: DashboardPageProps) {
   const { total, userTotals } = useTransactions()
   const { settings } = useSettings()
+  const { user, users } = useAuth()
 
-  const riloTotal = userTotals[RILO.id] || 0
-  const isnaTotal = userTotals[ISNA.id] || 0
+  const hour = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', hour12: false })
+  const h = parseInt(hour, 10)
+  const greeting = h < 11 ? 'Selamat Pagi' : h < 15 ? 'Selamat Siang' : h < 18 ? 'Selamat Sore' : 'Selamat Malam'
+
+  const userA = users[0]
+  const userB = users[1]
+  const riloTotal = userTotals[userA?.id || ''] || 0
+  const isnaTotal = userTotals[userB?.id || ''] || 0
   const riloPct = total > 0 ? Math.max(0, Math.min(100, (riloTotal / total) * 100)) : 0
   const isnaPct = total > 0 ? Math.max(0, Math.min(100, (isnaTotal / total) * 100)) : 0
   const goalPct = settings.goalAmount > 0 ? Math.min(100, (total / settings.goalAmount) * 100) : 0
+  const goalPctDisplay = goalPct.toFixed(1).replace('.', ',')
   const isComplete = total >= settings.goalAmount && settings.goalAmount > 0
 
   return (
     <div className="space-y-5">
+      <div className="bg-bg-surface rounded-2xl p-5 shadow-[0_4px_20px_rgba(31,51,80,0.06)] flex items-center gap-4">
+        <div
+          className="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-bold shrink-0 shadow-sm"
+          style={{ backgroundColor: user?.avatarColor }}
+        >
+          {user?.name?.[0]}
+        </div>
+        <div>
+          <p className="font-display text-lg font-semibold text-text-primary">{greeting},</p>
+          <p className="text-text-secondary text-[17px] font-medium -mt-0.5">{user?.name}</p>
+        </div>
+      </div>
       <TotalBalance total={total} />
 
       <div className="bg-bg-surface rounded-2xl p-4 shadow-[0_4px_20px_rgba(31,51,80,0.06)]">
         <div className="text-center mb-2">
-          <span className="font-display text-base font-semibold text-text-primary">
-            Goal: {settings.goalName}
-          </span>
+          {settings.goalName && (
+            <span className="font-display text-base font-semibold text-text-primary">
+              Goal: {settings.goalName}
+            </span>
+          )}
         </div>
         <HeartProgress
           pctA={riloPct}
           pctB={isnaPct}
-          colorA={RILO.avatarColor}
-          colorB={ISNA.avatarColor}
-          nameA={RILO.name}
-          nameB={ISNA.name}
+          colorA={userA?.avatarColor || '#5B8DEF'}
+          colorB={userB?.avatarColor || '#FF6B81'}
+          nameA={userA?.name || 'Rilo'}
+          nameB={userB?.name || 'Isna'}
           isComplete={isComplete}
         />
         <div className="mt-3">
@@ -49,7 +72,7 @@ export function DashboardPage({ onAddTransaction }: DashboardPageProps) {
               }}
             >
               {goalPct >= 8 && (
-                <span className="text-white text-[12px] font-bold drop-shadow-sm">{goalPct}%</span>
+                <span className="text-white text-[12px] font-bold drop-shadow-sm">{goalPctDisplay}%</span>
               )}
             </div>
           </div>
@@ -60,7 +83,7 @@ export function DashboardPage({ onAddTransaction }: DashboardPageProps) {
         </div>
       </div>
 
-      <BreakdownCard total={total} userTotals={userTotals} />
+      <BreakdownCard goalAmount={settings.goalAmount} userTotals={userTotals} users={users} />
 
       <button
         onClick={onAddTransaction}

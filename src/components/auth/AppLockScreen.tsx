@@ -10,11 +10,12 @@ export function AppLockScreen() {
 
   useEffect(() => {
     if (pin.length === 6) {
-      const ok = unlock()
-      if (!ok) {
-        setError('PIN salah')
-        setPin('')
-      }
+      unlock(pin).then(ok => {
+        if (!ok) {
+          setError('PIN salah')
+          setPin('')
+        }
+      })
     }
   }, [pin, unlock])
 

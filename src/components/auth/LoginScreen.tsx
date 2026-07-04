@@ -1,100 +1,73 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../hooks/useAuth'
-import { USERS } from '../../data/mock'
 import { PinInput } from '../ui/PinInput'
-import { Heart, ChevronLeft } from 'lucide-react'
+import { Heart, Lock } from 'lucide-react'
 
 export function LoginScreen() {
   const { login } = useAuth()
-  const [userId, setUserId] = useState<string>('')
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
-  const [step, setStep] = useState<'select' | 'pin'>('select')
   const [loggingIn, setLoggingIn] = useState(false)
+  const [locked, setLocked] = useState(false)
+  const [remainingMinutes, setRemainingMinutes] = useState(0)
+  const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null)
 
   useEffect(() => {
-    if (pin.length === 6 && !loggingIn) {
+    if (pin.length === 6 && !loggingIn && !locked) {
       setLoggingIn(true)
-      login(userId, pin).then(ok => {
-        if (!ok) {
-          setError('PIN salah, coba lagi')
+      login(pin).then(res => {
+        if (!res.ok) {
+          if (res.reason === 'locked') {
+            setLocked(true)
+            setRemainingMinutes(res.remainingMinutes)
+            setError(`Akun terkunci. Coba lagi ${res.remainingMinutes} menit lagi.`)
+          } else if (res.reason === 'wrong_pin') {
+            setError(res.remainingAttempts > 0
+              ? `PIN salah. ${res.remainingAttempts} kesempatan lagi.`
+              : 'PIN salah.')
+            setRemainingAttempts(res.remainingAttempts)
+          } else {
+            setError('Terjadi kesalahan. Coba lagi.')
+          }
           setPin('')
         }
         setLoggingIn(false)
       })
     }
-  }, [pin, userId, login, loggingIn])
-
-  function handleSelectUser(id: string) {
-    setUserId(id)
-    setStep('pin')
-    setError('')
-  }
-
-  function handlePinChange(val: string) {
-    setPin(val)
-    if (error) setError('')
-  }
-
-  if (step === 'select') {
-    return (
-      <div className="min-h-dvh bg-bg-primary flex flex-col items-center justify-center px-6"
-        style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-      >
-        <div className="mb-8 flex flex-col items-center">
-          <Heart size={48} className="text-love-pink" fill="var(--color-love-pink)" />
-          <h1 className="font-display text-2xl font-bold text-white mt-3">Tabungan Bersama</h1>
-          <p className="text-white/70 text-[15px] mt-1">Siapa kamu?</p>
-        </div>
-        <div className="flex flex-col gap-4 w-full max-w-xs">
-          {USERS.map(u => (
-            <button
-              key={u.id}
-              onClick={() => handleSelectUser(u.id)}
-              className="flex items-center gap-4 bg-bg-surface rounded-2xl p-5 shadow-[0_4px_20px_rgba(31,51,80,0.06)] active:scale-[0.98] transition-transform"
-            >
-              <div
-                className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg"
-                style={{ backgroundColor: u.avatarColor }}
-              >
-                {u.name[0]}
-              </div>
-              <span className="font-display text-lg font-semibold text-text-primary">Masuk sebagai {u.name}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-    )
-  }
+  }, [pin, login, loggingIn, locked])
 
   return (
     <div className="min-h-dvh bg-bg-primary flex flex-col items-center justify-center px-6"
       style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div className="mb-8 flex flex-col items-center">
-        <div
-          className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-2xl mb-3"
-          style={{ backgroundColor: USERS.find(u => u.id === userId)?.avatarColor }}
-        >
-          {USERS.find(u => u.id === userId)?.name[0]}
-        </div>
-        <h2 className="font-display text-xl font-bold text-white">Masukkan PIN</h2>
+        <Heart size={48} className="text-love-pink" fill="var(--color-love-pink)" />
+        <h1 className="font-display text-2xl font-bold text-white mt-3">Tabungan Bersama</h1>
+        <p className="text-white/70 text-[13px] mt-1">Masukkan PIN</p>
       </div>
 
-      <PinInput
-        value={pin}
-        onChange={handlePinChange}
-        error={error}
-        light
-      />
-
-      <button
-        onClick={() => { setStep('select'); setPin(''); setError('') }}
-        className="mt-8 flex items-center gap-1.5 h-10 px-5 rounded-full bg-white/90 text-blue-accent text-[13px] font-medium shadow-sm active:scale-95 transition-all"
-      >
-        <ChevronLeft size={14} />
-        Kembali
-      </button>
+      {locked ? (
+        <div className="flex flex-col items-center gap-3">
+          <Lock size={40} className="text-negative" />
+          <p className="text-white/80 text-[15px] text-center max-w-xs">
+            Terlalu banyak percobaan gagal. Coba lagi dalam {remainingMinutes} menit.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center">
+          {remainingAttempts !== null && (
+            <p className="text-white/70 text-[13px] mb-3">
+              {remainingAttempts} dari 5 kesempatan tersisa
+            </p>
+          )}
+          <PinInput
+            value={pin}
+            onChange={setPin}
+            error={error}
+            light
+          />
+        </div>
+      )}
     </div>
   )
 }

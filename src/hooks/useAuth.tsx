@@ -1,33 +1,88 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
 import type { User } from '../types'
-import { USERS, USER_EMAILS } from '../data/mock'
+import { NAME_TO_SHORT_ID } from '../data/mock'
 import { supabase } from '../lib/supabase'
+
+export type LoginResult =
+  | { ok: true }
+  | { ok: false; reason: 'locked'; remainingMinutes: number; failedAttempts: number }
+  | { ok: false; reason: 'wrong_pin'; remainingAttempts: number }
+  | { ok: false; reason: 'not_found' }
+  | { ok: false; reason: 'auth_error' }
 
 interface AuthState {
   user: User | null
+  users: User[]
+  usersById: Record<string, User>
   isLocked: boolean
   loading: boolean
-  login: (userId: string, pin: string) => Promise<boolean>
+  login: (pin: string) => Promise<LoginResult>
   lock: () => void
-  unlock: () => boolean
+  unlock: (pin: string) => Promise<boolean>
   logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthState | null>(null)
 
+const USER_CREDENTIALS = [
+  { name: 'Rilo', email: 'rilo@tabungan.app' },
+  { name: 'Isna', email: 'isna@tabungan.app' },
+]
+
+async function getUserIdByName(name: string): Promise<string | null> {
+  const { data } = await supabase.from('users').select('id').eq('name', name).single()
+  return data?.id || null
+}
+
+async function getUserDataByName(name: string) {
+  const { data } = await supabase
+    .from('users')
+    .select('id, failed_attempts, locked_until')
+    .eq('name', name)
+    .single()
+  return data
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [users, setUsers] = useState<User[]>([])
+  const [usersById, setUsersById] = useState<Record<string, User>>({})
   const [isLocked, setIsLocked] = useState(false)
   const [loading, setLoading] = useState(true)
 
+  // Startup: check session + persisted lock state
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
+        if (localStorage.getItem('app_locked') === 'true') {
+          setIsLocked(true)
+        }
+
         const profile = await fetchUserProfile(session.user.id)
-        if (profile) setUser(profile)
+        if (profile) {
+          setUser(profile)
+          await fetchAllUsers(profile)
+        }
       }
       setLoading(false)
     })
+  }, [])
+
+  // Auto-lock: background (visibilitychange) or kill/close (pagehide)
+  useEffect(() => {
+    function lockApp() {
+      setIsLocked(true)
+      localStorage.setItem('app_locked', 'true')
+    }
+    function handleVisibility() {
+      if (document.visibilityState === 'hidden') lockApp()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('pagehide', lockApp)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('pagehide', lockApp)
+    }
   }, [])
 
   async function fetchUserProfile(uuid: string): Promise<User | null> {
@@ -38,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .single()
     if (!data) return null
 
-    const shortId = data.name.toLowerCase() as 'rilo' | 'isna'
+    const shortId = NAME_TO_SHORT_ID[data.name.toLowerCase()] || data.name.toLowerCase()
     return {
       id: data.id,
       shortId,
@@ -47,38 +102,109 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const login = useCallback(async (userId: string, pin: string): Promise<boolean> => {
-    const email = USER_EMAILS[userId]
-    if (!email) return false
+  async function fetchAllUsers(currentUser: User) {
+    const { data } = await supabase
+      .from('users')
+      .select('id, name, avatar_color')
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password: pin,
-    })
-    if (error || !data.user) return false
+    if (data && data.length > 0) {
+      const map: Record<string, User> = {}
+      const list: User[] = data.map(u => {
+        const shortId = NAME_TO_SHORT_ID[u.name.toLowerCase()] || u.name.toLowerCase()
+        const user: User = { id: u.id, shortId, name: u.name, avatarColor: u.avatar_color }
+        map[u.id] = user
+        return user
+      })
+      setUsersById(map)
+      setUsers(list)
+    } else {
+      setUsersById({ [currentUser.id]: currentUser })
+      setUsers([currentUser])
+    }
+  }
 
-    const profile = await fetchUserProfile(data.user.id)
-    if (!profile) return false
+  const login = useCallback(async (pin: string): Promise<LoginResult> => {
+    const failedCredentials: { name: string; uuid: string | null }[] = []
 
-    setUser(profile)
-    setIsLocked(false)
-    return true
+    for (const { name, email } of USER_CREDENTIALS) {
+      const userData = await getUserDataByName(name)
+
+      // Skip if locked
+      if (userData?.locked_until && new Date(userData.locked_until) > new Date()) {
+        failedCredentials.push({ name, uuid: userData.id })
+        continue
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: pin })
+      if (data?.user) {
+        // Success — reset this user's attempts
+        await supabase.rpc('reset_failed_attempts', { target_user_id: data.user.id })
+
+        const profile = await fetchUserProfile(data.user.id)
+        if (!profile) return { ok: false, reason: 'not_found' }
+
+        setUser(profile)
+        setIsLocked(false)
+        localStorage.removeItem('app_locked')
+        await fetchAllUsers(profile)
+        return { ok: true }
+      }
+
+      const uuid = userData?.id || await getUserIdByName(name)
+      failedCredentials.push({ name, uuid })
+    }
+
+    // All failed — increment attempts for non-locked users
+    for (const { name, uuid } of failedCredentials) {
+      if (!uuid) continue
+
+      const userData = await getUserDataByName(name)
+      const isLocked = userData?.locked_until && new Date(userData.locked_until) > new Date()
+      if (isLocked) continue
+
+      const { data: rpcResult } = await supabase.rpc('increment_failed_attempts', { target_user_id: uuid })
+      if (rpcResult?.locked) {
+        return { ok: false, reason: 'locked', remainingMinutes: 15, failedAttempts: rpcResult.failed_attempts }
+      }
+    }
+
+    // No one got locked — get remaining attempts from first failed user
+    const firstUuid = failedCredentials.find(c => c.uuid)?.uuid
+    if (firstUuid) {
+      const { data: userRow } = await supabase.from('users').select('failed_attempts').eq('id', firstUuid).single()
+      const remaining = Math.max(0, 5 - (userRow?.failed_attempts || 0))
+      return { ok: false, reason: 'wrong_pin', remainingAttempts: remaining }
+    }
+
+    return { ok: false, reason: 'auth_error' }
   }, [])
 
   const lock = useCallback(() => setIsLocked(true), [])
-  const unlock = useCallback((): boolean => {
+
+  const unlock = useCallback(async (pin: string): Promise<boolean> => {
+    if (!user) return false
+    const cred = USER_CREDENTIALS.find(c => c.name === user.name)
+    if (!cred) return false
+
+    const { error } = await supabase.auth.signInWithPassword({ email: cred.email, password: pin })
+    if (error) return false
+
     setIsLocked(false)
+    localStorage.removeItem('app_locked')
     return true
-  }, [])
+  }, [user])
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut()
     setUser(null)
+    setUsers([])
+    setUsersById({})
     setIsLocked(false)
+    localStorage.removeItem('app_locked')
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, isLocked, loading, login, lock, unlock, logout }}>
+    <AuthContext.Provider value={{ user, users, usersById, isLocked, loading, login, lock, unlock, logout }}>
       {children}
     </AuthContext.Provider>
   )

@@ -1,14 +1,15 @@
-import type { Transaction } from '../../types'
-import { USERS, formatIDR } from '../../data/mock'
+import type { Transaction, User } from '../../types'
+import { formatIDR } from '../../data/mock'
 
 interface TransactionRowProps {
   transaction: Transaction & { runningTotal?: number }
+  usersById: Record<string, User>
 }
 
 const TYPE_LABEL: Record<string, string> = { in: 'Masuk', out: 'Keluar' }
 
-export function TransactionRow({ transaction }: TransactionRowProps) {
-  const user = USERS.find(u => u.id === transaction.userId)
+export function TransactionRow({ transaction, usersById }: TransactionRowProps) {
+  const user = usersById[transaction.userId]
   const isIn = transaction.type === 'in'
   const date = new Date(transaction.createdAt)
   const dateStr = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })

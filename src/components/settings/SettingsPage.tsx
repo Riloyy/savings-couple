@@ -2,14 +2,14 @@ import { useState } from 'react'
 import { useSettings } from '../../hooks/useSettings'
 import { useTransactions } from '../../hooks/useTransactions'
 import { useAuth } from '../../hooks/useAuth'
-import { RILO, ISNA, formatIDR, DEFAULT_SETTINGS } from '../../data/mock'
+import { formatIDR, DEFAULT_SETTINGS } from '../../data/mock'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
 
 export function SettingsPage() {
   const { settings, updateGoal } = useSettings()
   const { resetTransactions } = useTransactions()
-  const { logout } = useAuth()
+  const { logout, users } = useAuth()
   const [goalName, setGoalName] = useState(settings.goalName)
   const [goalAmount, setGoalAmount] = useState(settings.goalAmount.toLocaleString('id-ID'))
   const [saved, setSaved] = useState(false)
@@ -103,7 +103,7 @@ export function SettingsPage() {
 
       <Card>
         <h3 className="font-display text-base font-semibold text-text-primary mb-3">Akun Terdaftar</h3>
-        {[RILO, ISNA].map(u => (
+        {users.map(u => (
           <div key={u.id} className="flex items-center gap-3 py-2">
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold"
@@ -113,19 +113,9 @@ export function SettingsPage() {
             </div>
             <div>
               <p className="text-[15px] font-semibold text-text-primary">{u.name}</p>
-              <p className="text-[13px] text-text-secondary">ID: {u.id}</p>
             </div>
           </div>
         ))}
-      </Card>
-
-      <Card>
-        <h3 className="font-display text-base font-semibold text-text-primary mb-3">Device Terdaftar</h3>
-        <p className="text-[13px] text-text-secondary mb-3">Reset device manual via Supabase dashboard.</p>
-        <div className="bg-love-pink-soft rounded-xl px-4 py-3">
-          <p className="text-[13px] text-text-primary">HP ini terdaftar sejak</p>
-          <p className="text-[15px] font-semibold text-text-primary">2 Juli 2026</p>
-        </div>
       </Card>
 
       <Button variant="danger" full onClick={logout}>
