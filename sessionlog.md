@@ -355,4 +355,4 @@ git revert 982bd1a
 | Auto-lock on background | ✅ |
 | PWA (manifest + icons + service worker) | ✅ |
 | Deploy ke Vercel | ✅ |
-| **GitHub + push** | **⏳ pending instruksi** |
+| GitHub + push | ✅ |
