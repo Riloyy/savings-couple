@@ -1,5 +1,11 @@
 node_modules
 dist
 .env
+.env.local
+.env.*.local
 
 .vercel
+
+# Personal docs
+sessionlog.md
+PLAN.md
