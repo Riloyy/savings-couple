@@ -93,7 +93,7 @@ settings         (id, goal_amount, goal_name, updated_at)
 
 ---
 
-## 7. Yang Sudah Diputuskan (jangan diubah tanpa diskusi ulang)
+## 7. Yang Sudah Diputuskan
 
 - Device lock: aktif (device + app lock, keduanya).
 - Login: ID + PIN (bukan email/password biasa).
