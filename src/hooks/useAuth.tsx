@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
 import type { User } from '../types'
-import { NAME_TO_SHORT_ID } from '../data/mock'
 import { supabase } from '../lib/supabase'
 
 export type LoginResult =
@@ -24,10 +23,27 @@ interface AuthState {
 
 const AuthContext = createContext<AuthState | null>(null)
 
-const USER_CREDENTIALS = [
-  { name: 'Rilo', email: 'rilo@tabungan.app' },
-  { name: 'Isna', email: 'isna@tabungan.app' },
-]
+function getCredentials() {
+  const list: { name: string; email: string }[] = []
+  const n1 = import.meta.env.VITE_USER1_NAME
+  const e1 = import.meta.env.VITE_USER1_EMAIL
+  const n2 = import.meta.env.VITE_USER2_NAME
+  const e2 = import.meta.env.VITE_USER2_EMAIL
+  if (n1 && e1) list.push({ name: n1, email: e1 })
+  if (n2 && e2) list.push({ name: n2, email: e2 })
+  return list
+}
+
+function getNameToShortId() {
+  const map: Record<string, string> = {}
+  const n1 = import.meta.env.VITE_USER1_NAME
+  const s1 = import.meta.env.VITE_USER1_SHORT_ID
+  const n2 = import.meta.env.VITE_USER2_NAME
+  const s2 = import.meta.env.VITE_USER2_SHORT_ID
+  if (n1 && s1) map[n1.toLowerCase()] = s1
+  if (n2 && s2) map[n2.toLowerCase()] = s2
+  return map
+}
 
 async function getUserIdByName(name: string): Promise<string | null> {
   const { data } = await supabase.from('users').select('id').eq('name', name).single()
@@ -93,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .single()
     if (!data) return null
 
-    const shortId = NAME_TO_SHORT_ID[data.name.toLowerCase()] || data.name.toLowerCase()
+    const shortId = getNameToShortId()[data.name.toLowerCase()] || data.name.toLowerCase()
     return {
       id: data.id,
       shortId,
@@ -110,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (data && data.length > 0) {
       const map: Record<string, User> = {}
       const list: User[] = data.map(u => {
-        const shortId = NAME_TO_SHORT_ID[u.name.toLowerCase()] || u.name.toLowerCase()
+        const shortId = getNameToShortId()[u.name.toLowerCase()] || u.name.toLowerCase()
         const user: User = { id: u.id, shortId, name: u.name, avatarColor: u.avatar_color }
         map[u.id] = user
         return user
@@ -126,6 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (pin: string): Promise<LoginResult> => {
     const failedCredentials: { name: string; uuid: string | null }[] = []
 
+    const USER_CREDENTIALS = getCredentials()
     for (const { name, email } of USER_CREDENTIALS) {
       const userData = await getUserDataByName(name)
 
@@ -183,7 +200,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const unlock = useCallback(async (pin: string): Promise<boolean> => {
     if (!user) return false
-    const cred = USER_CREDENTIALS.find(c => c.name === user.name)
+    const cred = getCredentials().find(c => c.name === user.name)
     if (!cred) return false
 
     const { error } = await supabase.auth.signInWithPassword({ email: cred.email, password: pin })
