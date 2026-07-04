@@ -10,7 +10,7 @@ A private PWA for couples to track shared savings goals together.
 - **Real-time sync** — Changes appear instantly on both devices via Supabase Realtime
 - **PIN authentication** — Secure login with PIN, auto-lock on background or app kill
 - **Brute-force protection** — Account locks temporarily after repeated failed attempts
-- **PWA** — Installable on手机 (Add to Home Screen), works offline for viewing cached data
+- **PWA** — Installable on mobile phone (Add to Home Screen), works offline for viewing cached data
 
 ## Tech Stack
 
