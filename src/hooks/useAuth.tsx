@@ -203,6 +203,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const cred = getCredentials().find(c => c.name === user.name)
     if (!cred) return false
 
+    // Check if account is locked
+    const { data: userData } = await supabase
+      .from('users')
+      .select('locked_until')
+      .eq('id', user.id)
+      .single()
+
+    if (userData?.locked_until && new Date(userData.locked_until) > new Date()) {
+      return false
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email: cred.email, password: pin })
     if (error) {
       await supabase.rpc('increment_failed_attempts', { target_user_id: user.id })
