@@ -181,7 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { data: rpcResult } = await supabase.rpc('increment_failed_attempts', { target_user_id: uuid })
       if (rpcResult?.locked) {
-        return { ok: false, reason: 'locked', remainingMinutes: 15, failedAttempts: rpcResult.failed_attempts }
+        return { ok: false, reason: 'locked', remainingMinutes: 5, failedAttempts: rpcResult.failed_attempts }
       }
     }
 
