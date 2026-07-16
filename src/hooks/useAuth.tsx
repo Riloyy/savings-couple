@@ -204,8 +204,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!cred) return false
 
     const { error } = await supabase.auth.signInWithPassword({ email: cred.email, password: pin })
-    if (error) return false
+    if (error) {
+      await supabase.rpc('increment_failed_attempts', { target_user_id: user.id })
+      return false
+    }
 
+    await supabase.rpc('reset_failed_attempts', { target_user_id: user.id })
     setIsLocked(false)
     localStorage.removeItem('app_locked')
     return true
